@@ -1,0 +1,136 @@
+// Teacher Paper Maker — Prisma schema (Phase 1).
+// Additive migrations only. Index userId / status / createdAt on relevant tables.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DocumentStatus {
+  DRAFT
+  GENERATING
+  READY
+  ARCHIVED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  // Null for OAuth-only accounts. Never stores plaintext.
+  passwordHash  String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  profile        TeacherProfile?
+  accounts       Account[]
+  sessions       Session[]
+  resetTokens    PasswordResetToken[]
+  documents      Document[]
+
+  @@index([createdAt])
+  @@map("users")
+}
+
+model TeacherProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  schoolName          String?
+  preferredCurriculum String?
+  preferredGrades     String[] @default([])
+  preferredSubjects   String[] @default([])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("teacher_profiles")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  // Stores a SHA-256 hash of the token, never the raw token.
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model Document {
+  id         String         @id @default(cuid())
+  userId     String
+  title      String
+  curriculum String?
+  grade      String?
+  subject    String?
+  status     DocumentStatus @default(DRAFT)
+  starred    Boolean        @default(false)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  deletedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("documents")
+}
+
+// --- Auth.js (NextAuth) adapter models ---
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
