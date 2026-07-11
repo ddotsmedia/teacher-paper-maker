@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+env:
+  NODE_ENV: test
+  AUTH_SECRET: test-secret-ci-only-not-real-value-000000000000
+  AUTH_URL: http://localhost:3000
+  APP_URL: http://localhost:3000
+  NEXT_PUBLIC_APP_URL: http://localhost:3000
+  AUTH_GOOGLE_ID: test-google-id
+  AUTH_GOOGLE_SECRET: test-google-secret
+  SMTP_HOST: localhost
+  SMTP_PORT: '1025'
+  SMTP_FROM: noreply@teacherpaper.local
+  DATABASE_URL: postgresql://tpm:tpm@localhost:5432/tpm_test?schema=public
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tpm
+          POSTGRES_PASSWORD: tpm
+          POSTGRES_DB: tpm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tpm -d tpm_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Prettier check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Apply migrations
+        run: pnpm db:migrate
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Integration tests
+        run: pnpm test:integration
+
+      - name: Build
+        run: pnpm build

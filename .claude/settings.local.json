@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Write-Output \"node: $\\(node --version 2>$null\\)\"; Write-Output \"pnpm: $\\(pnpm --version 2>$null\\)\"; Write-Output \"npm: $\\(npm --version 2>$null\\)\"; Write-Output \"git: $\\(git --version 2>$null\\)\"; Write-Output \"docker: $\\(docker --version 2>$null\\)\")",
+      "PowerShell(winget install --id OpenJS.NodeJS.LTS -e --accept-source-agreements --accept-package-agreements --disable-interactivity 2>&1)",
+      "PowerShell(winget install --id Git.Git -e --accept-source-agreements --accept-package-agreements --disable-interactivity 2>&1)",
+      "PowerShell(Write-Output \"node: $\\(node --version 2>$null\\)\"; Write-Output \"pnpm: $\\(pnpm --version 2>$null\\)\"; Write-Output \"git: $\\(git --version 2>$null\\)\")",
+      "PowerShell(winget install --id PostgreSQL.PostgreSQL.16 -e --accept-source-agreements --accept-package-agreements --disable-interactivity 2>&1)"
+    ]
+  }
+}
