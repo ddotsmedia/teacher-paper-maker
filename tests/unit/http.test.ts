@@ -35,7 +35,10 @@ describe('http helpers', () => {
     const result = z.object({ a: z.string(), b: z.number() }).safeParse({ a: 1, b: 'x' });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(flattenZodError(result.error)).toMatchObject({ a: expect.any(String), b: expect.any(String) });
+      expect(flattenZodError(result.error)).toMatchObject({
+        a: expect.any(String),
+        b: expect.any(String),
+      });
     }
   });
 

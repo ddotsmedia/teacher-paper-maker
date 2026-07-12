@@ -14,6 +14,7 @@
     "@auth/prisma-adapter": "^2.7.4",
     "@tpm/config": "workspace:*",
     "@tpm/database": "workspace:*",
+    "@tpm/queue": "workspace:*",
     "@tpm/schemas": "workspace:*",
     "@tpm/ui": "workspace:*",
     "bcryptjs": "^2.4.3",

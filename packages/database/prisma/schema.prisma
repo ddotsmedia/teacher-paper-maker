@@ -17,6 +17,13 @@ enum DocumentStatus {
   ARCHIVED
 }
 
+enum GenerationStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -34,6 +41,7 @@ model User {
   sessions       Session[]
   resetTokens    PasswordResetToken[]
   documents      Document[]
+  generationJobs GenerationJob[]
 
   @@index([createdAt])
   @@map("users")
@@ -71,24 +79,77 @@ model PasswordResetToken {
 }
 
 model Document {
-  id         String         @id @default(cuid())
-  userId     String
-  title      String
-  curriculum String?
-  grade      String?
-  subject    String?
-  status     DocumentStatus @default(DRAFT)
-  starred    Boolean        @default(false)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  deletedAt  DateTime?
+  id          String         @id @default(cuid())
+  userId      String
+  type        String         @default("WORKSHEET")
+  title       String
+  curriculum  String?
+  grade       String?
+  subject     String?
+  chapter     String?
+  topic       String?
+  status      DocumentStatus @default(DRAFT)
+  starred     Boolean        @default(false)
+  contentJson Json?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions      Question[]
+  generationJobs GenerationJob[]
 
   @@index([userId])
   @@index([status])
   @@index([createdAt])
   @@map("documents")
+}
+
+model GenerationJob {
+  id            String           @id @default(cuid())
+  userId        String
+  documentId    String
+  provider      String
+  model         String
+  requestType   String
+  status        GenerationStatus @default(PENDING)
+  inputTokens   Int?
+  outputTokens  Int?
+  estimatedCost Float?
+  latencyMs     Int?
+  error         String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([documentId])
+  @@index([status])
+  @@map("generation_jobs")
+}
+
+model Question {
+  id           String    @id @default(cuid())
+  documentId   String
+  document     Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  type         String
+  question     String    @db.Text
+  answerJson   Json
+  marks        Int
+  difficulty   String
+  bloomLevel   String
+  displayOrder Int       @default(0)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([documentId])
+  @@index([deletedAt])
+  @@map("questions")
 }
 
 // --- Auth.js (NextAuth) adapter models ---

@@ -1,0 +1,24 @@
+{
+  "name": "@tpm/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx --env-file=../../.env watch src/index.ts",
+    "start": "tsx --env-file=../../.env src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@tpm/ai": "workspace:*",
+    "@tpm/database": "workspace:*",
+    "@tpm/queue": "workspace:*",
+    "@tpm/schemas": "workspace:*",
+    "bullmq": "^5.80.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

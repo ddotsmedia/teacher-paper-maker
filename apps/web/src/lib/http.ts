@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ZodError, type ZodSchema } from 'zod';
+import { z, ZodError, type ZodTypeAny } from 'zod';
 
 export function jsonOk<T>(data: T, status = 200): NextResponse {
   return NextResponse.json(data, { status });
@@ -14,7 +14,10 @@ export function jsonError(
 }
 
 /** Parse a request JSON body against a Zod schema. Throws {@link HttpError} (400) on failure. */
-export async function parseJson<T>(request: Request, schema: ZodSchema<T>): Promise<T> {
+export async function parseJson<S extends ZodTypeAny>(
+  request: Request,
+  schema: S,
+): Promise<z.infer<S>> {
   let body: unknown;
   try {
     body = await request.json();

@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/coverage/**',
       '**/playwright-report/**',
       '**/test-results/**',
+      '**/next-env.d.ts',
       'packages/database/generated/**',
       'packages/database/prisma/migrations/**',
     ],
@@ -29,7 +30,14 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.config.{js,mjs,ts}', '**/tests/**', '**/*.test.ts', '**/*.spec.ts'],
+    files: [
+      '**/*.config.{js,mjs,ts}',
+      '**/tests/**',
+      '**/*.test.ts',
+      '**/*.spec.ts',
+      'apps/worker/**',
+      'packages/database/prisma/seed.ts',
+    ],
     rules: {
       'no-console': 'off',
     },

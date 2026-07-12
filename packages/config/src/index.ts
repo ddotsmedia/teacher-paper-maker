@@ -19,6 +19,9 @@ const EnvSchema = z.object({
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_FROM: z.string().min(1).default('noreply@teacherpaper.local'),
 
+  REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
+  ANTHROPIC_API_KEY: z.string().optional(),
+
   APP_URL: z.string().url().default('http://localhost:3000'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 });
