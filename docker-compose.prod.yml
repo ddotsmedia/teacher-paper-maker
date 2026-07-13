@@ -1,0 +1,93 @@
+﻿version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tpm_postgres
+    environment:
+      POSTGRES_DB: teacher_paper_maker
+      POSTGRES_USER: tpm_user
+      POSTGRES_PASSWORD: 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - tpm_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: tpm_redis
+    command: redis-server --requirepass 
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - tpm_network
+
+  web:
+    image: node:20-alpine
+    container_name: tpm_web
+    working_dir: /app
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://tpm_user:@postgres:5432/teacher_paper_maker
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: 
+      NEXTAUTH_SECRET: 
+      NEXTAUTH_URL: https://
+      ANTHROPIC_API_KEY: 
+      AWS_REGION: 
+      AWS_ACCESS_KEY_ID: 
+      AWS_SECRET_ACCESS_KEY: 
+      AWS_S3_BUCKET: 
+      SENTRY_DSN: 
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - tpm_network
+    command: sh -c "pnpm install && pnpm db:migrate:deploy && pnpm build && pnpm start"
+
+  worker:
+    image: node:20-alpine
+    container_name: tpm_worker
+    working_dir: /app/apps/worker
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://tpm_user:@postgres:5432/teacher_paper_maker
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: 
+      ANTHROPIC_API_KEY: 
+      AWS_REGION: 
+      AWS_ACCESS_KEY_ID: 
+      AWS_SECRET_ACCESS_KEY: 
+      AWS_S3_BUCKET: 
+      SENTRY_DSN: 
+    volumes:
+      - ./:/app
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - tpm_network
+    command: sh -c "cd /app && pnpm install && node apps/worker/dist/index.js"
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  tpm_network:
+    driver: bridge
