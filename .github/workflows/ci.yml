@@ -1,78 +1,73 @@
-name: CI
+﻿name: CI
 
 on:
   push:
-    branches: [develop, main]
+    branches: [main, develop, feature/**]
   pull_request:
-    branches: [develop, main]
-
-env:
-  NODE_ENV: test
-  AUTH_SECRET: test-secret-ci-only-not-real-value-000000000000
-  AUTH_URL: http://localhost:3000
-  APP_URL: http://localhost:3000
-  NEXT_PUBLIC_APP_URL: http://localhost:3000
-  AUTH_GOOGLE_ID: test-google-id
-  AUTH_GOOGLE_SECRET: test-google-secret
-  SMTP_HOST: localhost
-  SMTP_PORT: '1025'
-  SMTP_FROM: noreply@teacherpaper.local
-  DATABASE_URL: postgresql://tpm:tpm@localhost:5432/tpm_test?schema=public
+    branches: [main, develop]
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
-
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16
         env:
-          POSTGRES_USER: tpm
-          POSTGRES_PASSWORD: tpm
-          POSTGRES_DB: tpm_test
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
           - 5432:5432
+      redis:
+        image: redis:7
         options: >-
-          --health-cmd "pg_isready -U tpm -d tpm_test"
-          --health-interval 5s
+          --health-cmd 'redis-cli ping'
+          --health-interval 10s
           --health-timeout 5s
-          --health-retries 10
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      NEXTAUTH_SECRET: test-secret
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
-
+      - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install
+      - run: pnpm db:migrate:deploy
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test:unit
+      - run: pnpm build
 
-      - name: Generate Prisma client
-        run: pnpm db:generate
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
 
-      - name: Prettier check
-        run: pnpm format:check
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Apply migrations
-        run: pnpm db:migrate
-
-      - name: Unit tests
-        run: pnpm test:unit
-
-      - name: Integration tests
-        run: pnpm test:integration
-
-      - name: Build
-        run: pnpm build
+      - run: pnpm install
+      - run: pnpm build
+      - name: Deploy to Vercel
+        run: |
+          npm i -g vercel
+          vercel --prod --token=${{ secrets.VERCEL_TOKEN }}

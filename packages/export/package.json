@@ -1,0 +1,23 @@
+﻿{
+  "name": "@tpm/export",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pdfkit": "^0.13.0",
+    "docx": "^8.5.0",
+    "zod": "^3.23.0",
+    "@tpm/schemas": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.7.0"
+  }
+}
