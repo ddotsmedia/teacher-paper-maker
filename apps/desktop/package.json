@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@tpm/desktop",
   "version": "0.1.0",
   "private": true,
@@ -12,7 +12,7 @@
     "@tauri-apps/api": "^1.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "axios": "^1.7.0",
+    "axios": "^1.20.0",
     "zod": "^3.23.0",
     "@tpm/database": "workspace:*",
     "@tpm/schemas": "workspace:*",
